@@ -1,0 +1,4 @@
+Flask
+requests
+Jinja2
+urllib3
