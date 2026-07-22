@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ AGENT_NAME }}
+  namespace: {{ NAMESPACE }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ AGENT_NAME }}
+  template:
+    metadata:
+      labels:
+        app: {{ AGENT_NAME }}
+    spec:
+      {% if NODE_SELECTOR %}
+      nodeSelector:
+        node-type: {{ NODE_SELECTOR }}
+      {% endif %}
+      {% if HOSTALIASES %}
+      hostAliases:
+{{ HOSTALIASES }}
+      {% endif %}
+      containers:
+      - name: agent
+#        imagePullPolicy: Always
+        image: {{ IMAGE }}
+        command: ["/bin/bash", "-c"]
+        args:
+          - |
+            #python -m pip install --no-cache-dir --no-deps "$AGENT_WHL_URL"
+            #exec $AGENT_COMMAND --host 0.0.0.0 --port 8080
+            #sleep infinity
+            pip install "$AGENT_WHL_URL"
+            "$AGENT_NAME"-api --host 0.0.0.0 --port 8080
+        env:
+        - name: AGENT_NAME
+          value: "{{ ORIGINAL_AGENT_NAME }}"
+        - name: AGENT_WHL_URL
+          value: "{{ AGENT_ENDPOINT }}"
+        - name: AGENT_COMMAND
+          value: "{{ AGENT_COMMAND }}"
+        ports:
+        - containerPort: 8080
